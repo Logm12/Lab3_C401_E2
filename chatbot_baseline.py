@@ -134,6 +134,35 @@ Flag visa requirements, safety tips, booking lead times, or anything the travele
 - Tailor advice to the traveler profile (solo, couple, family, group, elderly, backpacker, luxury).
 """
 
+    def chat_with_metrics(self, user_input: str) -> dict:
+        start_time = time.perf_counter()
+        logger.log_event("CHATBOT_START", {"input": user_input, "model": self.llm.model_name})
+        response_dict = self.llm.generate(user_input, system_prompt=self.get_system_prompt())
+        content = response_dict.get("content", "")
+        usage = response_dict.get("usage", {}) or {}
+        latency_ms = int((time.perf_counter() - start_time) * 1000)
+        result = {
+            "answer": content,
+            "usage": {
+                "prompt_tokens": int(usage.get("prompt_tokens", 0) or 0),
+                "completion_tokens": int(usage.get("completion_tokens", 0) or 0),
+                "total_tokens": int(usage.get("total_tokens", 0) or 0),
+            },
+            "latency_ms": latency_ms,
+            "ttft_ms": int(response_dict.get("latency_ms", latency_ms) or latency_ms),
+            "loop_count": 1,
+            "errors": {
+                "json_parser_error": 0,
+                "hallucination_error": 0,
+                "timeout_error": 0,
+            },
+        }
+        logger.log_event("CHATBOT_END", {"status": "success", "latency_ms": latency_ms})
+        return result
+
+    def chat(self, user_input: str) -> str:
+        return self.chat_with_metrics(user_input)["answer"]
+
     def chat_stream(self, user_input: str):
         """
         Streams the response token by token, filtering out the <thinking> block.

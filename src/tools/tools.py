@@ -105,11 +105,15 @@ def get_weather(location: str, date: str) -> str:
         forecast_date_obj = datetime.strptime(forecast_date, "%Y-%m-%d").date()
         delta             = (forecast_date_obj - date_type.today()).days
 
-        if delta < 0 or delta > 16:
+        if delta < 0:
+            api_url = "https://archive-api.open-meteo.com/v1/archive"
+        elif 0 <= delta <= 16:
+            api_url = "https://api.open-meteo.com/v1/forecast"
+        else:
             return _safe_json({
                 "error": (
-                    f"Ngày {forecast_date} nằm ngoài phạm vi dự báo. "
-                    f"Open-Meteo chỉ hỗ trợ dự báo từ 0 đến 16 ngày kể từ hôm nay."
+                    f"Ngày {forecast_date} nằm quá xa trong tương lai (>16 ngày). "
+                    f"Open-Meteo chỉ hỗ trợ dự báo tối đa 16 ngày kể từ hôm nay."
                 )
             })
 
@@ -124,7 +128,7 @@ def get_weather(location: str, date: str) -> str:
         lon = float(geo[0]["lon"])
 
         weather = _http_get(
-            "https://api.open-meteo.com/v1/forecast",
+            api_url,
             {
                 "latitude":   lat,
                 "longitude":  lon,
@@ -204,7 +208,23 @@ def get_accommodation(
         return _safe_json({"error": f"Lỗi tìm khách sạn: {str(error)}", "query": query})
 
 
-
+def get_restaurants(location: str, preferences: str = "đặc sản địa phương") -> str:
+    query = (
+        f"nhà hàng {preferences} ngon tại {location} "
+        f"giá bao nhiêu tiền một người VND"
+    )
+    try:
+        results = _search_web(query, max_results=6)
+        return _safe_json({
+            "location":    location,
+            "preferences": preferences,
+            "currency":    "VND",
+            "source":      "tavily",
+            "query":       query,
+            "results":     results,
+        })
+    except Exception as error:
+        return _safe_json({"error": f"Lỗi tìm nhà hàng: {str(error)}", "query": query})
 
 
 def get_attractions(location: str, category: str = "nổi tiếng") -> str:
@@ -234,8 +254,8 @@ TRAVEL_TOOLS = [
     {
         "name": "get_weather",
         "description": (
-            "Lấy dự báo thời tiết từ Open-Meteo theo địa điểm và ngày. "
-            "Chỉ hỗ trợ 0–16 ngày kể từ hôm nay. "
+            "Lấy dự báo thời tiết hoặc dữ liệu thời tiết lịch sử từ Open-Meteo theo địa điểm và ngày. "
+            "Hỗ trợ cả ngày trong quá khứ và tương lai (tối đa 16 ngày). "
             'Input JSON: {"location": "string", "date": "DD/MM/YYYY hoặc YYYY-MM-DD"}'
         ),
         "func": get_weather,

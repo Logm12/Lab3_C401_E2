@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from src.agent.agent import ReActAgent
-from src.tools.travel_tools import TRAVEL_TOOLS
+from src.tools.tools import TRAVEL_TOOLS
 
 def _is_truthy(value: str) -> bool:
     return str(value).strip().lower() in {"1", "true", "yes", "y", "on"}
@@ -56,7 +56,7 @@ def main():
                 print("Đã tắt debug.")
                 continue
             result = agent.run(user_request)
-            print(f"\nAgent v1: {result}")
+            print(f"\nAgent v2: {result}")
         except KeyboardInterrupt:
             print("\nTạm biệt!")
             break
