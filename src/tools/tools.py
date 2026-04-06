@@ -204,6 +204,9 @@ def get_accommodation(
         return _safe_json({"error": f"Lỗi tìm khách sạn: {str(error)}", "query": query})
 
 
+
+
+
 def get_attractions(location: str, category: str = "nổi tiếng") -> str:
     query = (
         f"điểm tham quan {category} tại {location} "
@@ -254,6 +257,14 @@ TRAVEL_TOOLS = [
             '"check_out": "DD/MM/YYYY", "budget": "string (VND)"}'
         ),
         "func": get_accommodation,
+    },
+    {
+        "name": "get_restaurants",
+        "description": (
+            "Tìm nhà hàng kèm giá ăn trung bình (VND/người) theo địa điểm và sở thích bằng web. "
+            'Input JSON: {"location": "string", "preferences": "string"}'
+        ),
+        "func": get_restaurants,
     },
     {
         "name": "get_attractions",
